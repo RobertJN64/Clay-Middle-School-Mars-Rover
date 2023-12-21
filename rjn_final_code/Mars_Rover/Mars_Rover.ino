@@ -15,7 +15,7 @@
  */
 
 #define DEBUG_PRINT_CHANNELS //enable serial plotter of RC transmitter channel values
-#define ENABLE_NORMAL_CONTROL //enables normal motor and steering control - disable for debug
+//#define ENABLE_NORMAL_CONTROL //enables normal motor and steering control - disable for debug
 //#define FORCE_MOTORS_ON //set motor speed to ch2_motor_speed regardless of other cmds
 
 #include <Servo.h>
@@ -136,12 +136,13 @@ void setup() {
 void loop() {
   // Reading the data comming from the RC Transmitter
   IBus.loop();
-  ch0_rover_steer = IBus.readChannel(0);
-  ch1_cam_tilt = IBus.readChannel(1);
-  ch2_motor_speed = IBus.readChannel(2);
-  ch3_cam_pan = IBus.readChannel(3);
-  ch6_drive_direction = IBus.readChannel(6);
-
+  // ALL CHANNELS ARE +1 from what it says on the flysky transmitter
+  ch0_rover_steer = IBus.readChannel(0);  //right stick horizontal
+  ch1_cam_tilt = IBus.readChannel(1); // right stick vertical
+  ch2_motor_speed = IBus.readChannel(2); // left stick vertical
+  ch3_cam_pan = IBus.readChannel(3); // left stick horizontal
+  ch6_drive_direction = IBus.readChannel(6); // SWITCH_A (top left switch) - to configure this: follow this video https://www.youtube.com/watch?v=JZQoHmLqZYg
+ 
   // Convertign the incoming data
   // Steering right
   if (ch0_rover_steer > 1515) {
