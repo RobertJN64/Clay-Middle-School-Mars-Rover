@@ -14,8 +14,8 @@
 
  */
 
-#define DEBUG_PRINT_CHANNELS //enable serial plotter of RC transmitter channel values
-//#define ENABLE_NORMAL_CONTROL //enables normal motor and steering control - disable for debug
+// #define DEBUG_PRINT_CHANNELS //enable serial plotter of RC transmitter channel values
+#define ENABLE_NORMAL_CONTROL //enables normal motor and steering control - disable for debug
 //#define FORCE_MOTORS_ON //set motor speed to ch2_motor_speed regardless of other cmds
 
 #include <Servo.h>
