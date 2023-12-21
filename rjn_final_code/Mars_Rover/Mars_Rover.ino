@@ -8,8 +8,18 @@
  *   AccelStepper:http://www.airspayce.com/mikem/arduino/AccelStepper/index.html
  */
 
+ /*
+
+ Edits by RobertJN64 under the MIT license.
+
+ */
+
+#define DEBUG_PRINT_CHANNELS //enable serial plotter of RC transmitter channel values
+#define ENABLE_NORMAL_CONTROL //enables normal motor and steering control - disable for debug
+//#define FORCE_MOTORS_ON //set motor speed to ch0 regardless of other cmds
+
 #include <Servo.h>
-#include <ServoEasing.h>
+#include <ServoEasing.hpp> //RJN EDIT - changed to .hpp b/c compiler errs on Arduino IDE 2.0
 #include <IBusBM.h>
 #include <AccelStepper.h>
 
@@ -175,6 +185,42 @@ void loop() {
   calculateMotorsSpeed();
   calculateServoAngle();
 
+#ifdef DEBUG_PRINT_CHANNELS
+  Serial.print("ch0:");
+  Serial.print(ch0);
+  Serial.print(",ch1:");
+  Serial.print(ch1);
+  Serial.print(",ch2:");
+  Serial.print(ch2);
+  Serial.print(",ch3:");
+  Serial.print(ch3);
+  Serial.print(",ch6:");
+  Serial.println(ch6);
+#endif
+
+#ifdef FORCE_MOTORS_ON
+  // Motor Wheel 1 - Left Front
+  digitalWrite(motorW1_IN1, LOW);
+  analogWrite(motorW1_IN2, speed1PWM);
+  // Motor Wheel 2 - Left Middle
+  digitalWrite(motorW2_IN1, LOW);
+  analogWrite(motorW2_IN2, speed1PWM);
+  // Motor Wheel 3 - Left Back
+  digitalWrite(motorW3_IN1, LOW);
+  analogWrite(motorW3_IN2, speed1PWM);
+  // Motor Wheel 4 - Right Front
+  digitalWrite(motorW4_IN1, LOW);
+  analogWrite(motorW4_IN2, speed1PWM);
+  // Motor Wheel 5 - Right Middle
+  digitalWrite(motorW5_IN1, LOW);
+  analogWrite(motorW5_IN2, speed1PWM);
+  // Motor Wheel 6 - Right Back
+  digitalWrite(motorW6_IN1, LOW);
+  analogWrite(motorW6_IN2, speed1PWM);
+#endif
+
+
+#ifdef ENABLE_NORMAL_CONTROL
   // Steer right
   if (ch0 > 1515) {
     // Servo motors
@@ -334,6 +380,8 @@ void loop() {
       digitalWrite(motorW6_IN2, LOW);
     }
   }
+#endif
+
   // Monitor the battery voltage
   int sensorValue = analogRead(A0);
   float voltage = sensorValue * (5.00 / 1023.00) * 3.02; // Convert the reading values from 5v to suitable 12V
