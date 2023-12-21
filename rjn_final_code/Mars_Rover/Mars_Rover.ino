@@ -16,7 +16,7 @@
 
 #define DEBUG_PRINT_CHANNELS //enable serial plotter of RC transmitter channel values
 #define ENABLE_NORMAL_CONTROL //enables normal motor and steering control - disable for debug
-//#define FORCE_MOTORS_ON //set motor speed to ch0 regardless of other cmds
+//#define FORCE_MOTORS_ON //set motor speed to ch2_motor_speed regardless of other cmds
 
 #include <Servo.h>
 #include <ServoEasing.hpp> //RJN EDIT - changed to .hpp b/c compiler errs on Arduino IDE 2.0
@@ -48,7 +48,7 @@ IBusBM IBus;
 IBusBM IBusSensor;
 
 int angle = 0;   // servo position in degrees
-int ch0, ch1, ch2, ch3, ch6 = 0;
+int ch0_rover_steer, ch1_cam_tilt, ch2_motor_speed, ch3_cam_pan, ch6_drive_direction = 0;
 int servo1Angle = 90;
 int servo3Angle = 90;
 int servo4Angle = 90;
@@ -136,32 +136,32 @@ void setup() {
 void loop() {
   // Reading the data comming from the RC Transmitter
   IBus.loop();
-  ch0 = IBus.readChannel(0);
-  ch1 = IBus.readChannel(1);
-  ch2 = IBus.readChannel(2);
-  ch3 = IBus.readChannel(3);
-  ch6 = IBus.readChannel(6);
+  ch0_rover_steer = IBus.readChannel(0);
+  ch1_cam_tilt = IBus.readChannel(1);
+  ch2_motor_speed = IBus.readChannel(2);
+  ch3_cam_pan = IBus.readChannel(3);
+  ch6_drive_direction = IBus.readChannel(6);
 
   // Convertign the incoming data
   // Steering right
-  if (ch0 > 1515) {
-    r = map(ch0, 1515, 2000, 1400, 600); // turining radius from 1400mm to 600mm
+  if (ch0_rover_steer > 1515) {
+    r = map(ch0_rover_steer, 1515, 2000, 1400, 600); // turining radius from 1400mm to 600mm
   }
   // Steering left
-  else if (ch0 < 1485) {
-    r = map(ch0, 1485, 1000, 1400, 600); // turining radius from 600mm to 1400mm
+  else if (ch0_rover_steer < 1485) {
+    r = map(ch0_rover_steer, 1485, 1000, 1400, 600); // turining radius from 600mm to 1400mm
   }
   // Rover speed in % from 0 to 100
-  s = map(ch2, 1000, 2000, 0, 100); // rover speed from 0% to 100%
+  s = map(ch2_motor_speed, 1000, 2000, 0, 100); // rover speed from 0% to 100%
 
   // Camera head steering
-  if (ch1 < 1485 ) {
+  if (ch1_cam_tilt < 1485 ) {
     if (camTilt >= 35) {
       camTilt--;
       delay(20);
     }
   }
-  if (ch1 > 1515 ) {
+  if (ch1_cam_tilt > 1515 ) {
     if (camTilt <= 165) {
       camTilt++;
       delay(20);
@@ -169,11 +169,11 @@ void loop() {
   }
   servoCamTilt.startEaseTo(camTilt); // Camera tilt
 
-  if (ch3 >= 1000 && ch3 < 1485) {
-    camPan = map(ch3, 1000, 1485, 400, 0);
+  if (ch3_cam_pan >= 1000 && ch3_cam_pan < 1485) {
+    camPan = map(ch3_cam_pan, 1000, 1485, 400, 0);
   }
-  else if (ch3 > 1515 && ch3 <= 2000) {
-    camPan = map(ch3, 1515, 2000, 0, -400);
+  else if (ch3_cam_pan > 1515 && ch3_cam_pan <= 2000) {
+    camPan = map(ch3_cam_pan, 1515, 2000, 0, -400);
   }
   else {
     camPan = 0;
@@ -186,16 +186,16 @@ void loop() {
   calculateServoAngle();
 
 #ifdef DEBUG_PRINT_CHANNELS
-  Serial.print("ch0:");
-  Serial.print(ch0);
-  Serial.print(",ch1:");
-  Serial.print(ch1);
-  Serial.print(",ch2:");
-  Serial.print(ch2);
-  Serial.print(",ch3:");
-  Serial.print(ch3);
-  Serial.print(",ch6:");
-  Serial.println(ch6);
+  Serial.print("ch0_rover_steer:");
+  Serial.print(ch0_rover_steer);
+  Serial.print(",ch1_cam_tilt:");
+  Serial.print(ch1_cam_tilt);
+  Serial.print(",ch2_motor_speed:");
+  Serial.print(ch2_motor_speed);
+  Serial.print(",ch3_cam_pan:");
+  Serial.print(ch3_cam_pan);
+  Serial.print(",ch6_drive_direction:");
+  Serial.println(ch6_drive_direction);
 #endif
 
 #ifdef FORCE_MOTORS_ON
@@ -222,7 +222,7 @@ void loop() {
 
 #ifdef ENABLE_NORMAL_CONTROL
   // Steer right
-  if (ch0 > 1515) {
+  if (ch0_rover_steer > 1515) {
     // Servo motors
     // Outer wheels
     servoW1.startEaseTo(97 + thetaInnerFront); // front wheel steer right
@@ -232,7 +232,7 @@ void loop() {
     servoW6.startEaseTo(96 - thetaOuterBack);
 
     // DC Motors
-    if (ch6 < 1500) { // Move forward
+    if (ch6_drive_direction < 1500) { // Move forward
       // Motor Wheel 1 - Left Front
       analogWrite(motorW1_IN1, speed1PWM);   // Outer wheels running at speed1 - max speed
       digitalWrite(motorW1_IN2, LOW);
@@ -253,7 +253,7 @@ void loop() {
       digitalWrite(motorW6_IN1, LOW);
       analogWrite(motorW6_IN2, speed2PWM); // Inner back wheel running at speed2 - lower speed
     }
-    else if (ch6 > 1500) {
+    else if (ch6_drive_direction > 1500) {
       // Motor Wheel 1 - Left Front
       digitalWrite(motorW1_IN1, LOW);   // Outer wheels running at speed1 - max speed
       analogWrite(motorW1_IN2, speed1PWM);
@@ -277,7 +277,7 @@ void loop() {
   }
 
   // Steer left
-  else if (ch0 < 1485) {
+  else if (ch0_rover_steer < 1485) {
     // Servo motors
     servoW1.startEaseTo(97 - thetaOuterFront);
     servoW3.startEaseTo(97 + thetaOuterBack);
@@ -285,7 +285,7 @@ void loop() {
     servoW6.startEaseTo(96 + thetaInnerBack);
 
     // DC Motors
-    if (ch6 < 1500) { // Move forward
+    if (ch6_drive_direction < 1500) { // Move forward
       // Motor Wheel 1 - Left Front
       analogWrite(motorW1_IN1, speed2PWM);   // PWM value
       digitalWrite(motorW1_IN2, LOW); // Forward
@@ -306,7 +306,7 @@ void loop() {
       digitalWrite(motorW6_IN1, LOW);
       analogWrite(motorW6_IN2, speed1PWM);
     }
-    else if (ch6 > 1500) { // Move backward
+    else if (ch6_drive_direction > 1500) { // Move backward
       // Motor Wheel 1 - Left Front
       digitalWrite(motorW1_IN1, LOW);   // PWM value
       analogWrite(motorW1_IN2, speed2PWM); // Forward
@@ -337,7 +337,7 @@ void loop() {
     servoW6.startEaseTo(96);
 
     // DC Motors
-    if (ch6 < 1500) {
+    if (ch6_drive_direction < 1500) {
       // Motor Wheel 1 - Left Front
       analogWrite(motorW1_IN1, speed1PWM);  // all wheels move at the same speed
       digitalWrite(motorW1_IN2, LOW); // Forward
@@ -358,7 +358,7 @@ void loop() {
       digitalWrite(motorW6_IN1, LOW);
       analogWrite(motorW6_IN2, speed1PWM);
     }
-    else if (ch6 > 1500) {
+    else if (ch6_drive_direction > 1500) {
       // Motor Wheel 1 - Left Front
       digitalWrite(motorW1_IN1, LOW);  // all wheels move at the same speed
       analogWrite(motorW1_IN2, speed1PWM); // Forward
@@ -392,7 +392,7 @@ void loop() {
 
 void calculateMotorsSpeed() {
   // if no steering, all wheels speed is the same - straight move
-  if (ch0 > 1485 && ch0 < 1515) {
+  if (ch0_rover_steer > 1485 && ch0_rover_steer < 1515) {
     speed1 = speed2 = speed3 = s;
   }
   // when steering, wheels speed depend on the turning radius value
